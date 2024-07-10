@@ -42,12 +42,12 @@ def auditoria_Lighthouse(url, mode):
 
     # Ruta completa al archivo de Lighthouse
     #lighthouse_path = '/Users/carlosgomez/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
-    LIGHTHUSE_PATH = r'C:\Users\carlo\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
+    LIGHTHOUSE_PATH = r'C:\Users\carlo\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
 
     # Comando para ejecutar Lighthouse con la configuración necesaria
     command = [
         PATH_NODE,
-        LIGHTHUSE_PATH,
+        LIGHTHOUSE_PATH,
         url,
         '--output=html',
         f'--output-path={finalHTML}',
@@ -65,7 +65,7 @@ def auditoria_Lighthouse(url, mode):
             print(f"Error al ejecutar Lighthouse desde {url} ({mode}):\n{result.stderr}")
             return None
     except FileNotFoundError:
-        print(f"Lighthouse no se encontró en la ruta especificada. Asegúrate de que está instalado y accesible en {LIGHTHUSE_PATH}.")
+        print(f"Lighthouse no se encontró en la ruta especificada. Asegúrate de que está instalado y accesible en {LIGHTHOUSE_PATH}.")
         return None
     
     print(f"Se genera informe {finalHTML}")

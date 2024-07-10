@@ -60,8 +60,8 @@ def auditoria_Lighthouse(url, mode):
 
     try:
         # Ejecuta la auditoría de Lighthouse
-        iniciarLH = subprocess.run(command, capture_output=True, text=True)
-        if iniciarLH.returncode != 0:
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode != 0:
             print(f"Error al ejecutar Lighthouse desde {url} ({mode}):\n{result.stderr}")
             return None
     except FileNotFoundError:

@@ -9,7 +9,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import base64
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-def save_as_pdf(driver, output_pdf_path):
+def guardar_como_pdf(driver, pathPDF):
     # Usa DevTools para guardar la página como PDF
     result = driver.execute_cdp_cmd("Page.printToPDF", {
         "printBackground": True,
@@ -17,10 +17,10 @@ def save_as_pdf(driver, output_pdf_path):
     })
 
     # Decodifica el resultado en base64 y guarda el archivo PDF
-    with open(output_pdf_path, "wb") as file:
-        file.write(base64.b64decode(result['data']))
+    with open(pathPDF, "wb") as archivo:
+        archivo.write(base64.b64decode(result['data']))
 
-def convert_html_to_pdf(input_html_path, output_pdf_path):
+def convertir_a_pdf(pathHTML, pathPDF):
     try:
         # Configura las opciones de Chrome
         options = webdriver.ChromeOptions()
@@ -31,9 +31,7 @@ def convert_html_to_pdf(input_html_path, output_pdf_path):
         options.add_argument("--disable-dev-shm-usage")
 
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-
-        # Abre el archivo HTML
-        driver.get('file://' + input_html_path)
+        driver.get('file://' + pathHTML)
 
         time.sleep(2)
         # Espera a que la página cargue completamente
@@ -42,25 +40,25 @@ def convert_html_to_pdf(input_html_path, output_pdf_path):
         # )
 
         # Guarda la página como PDF
-        save_as_pdf(driver, output_pdf_path)
-        print(f'PDF generado en: {output_pdf_path}')
+        guardar_como_pdf(driver, pathPDF)
+        print(f'PDF generado en: {pathPDF}')
     except Exception as e:
-        print(f"Error al convertir {input_html_path}: {e}")
+        print(f"Error al convertir {pathHTML}: {e}")
     finally:
         driver.quit()
 
-def convert_all_html_in_folder(folder_path):
-    start_time = time.time()  # Marca el inicio del tiempo
+def convertir_all_htmls(pathCarpeta):
+    inicio = time.time()  # Marca el inicio del tiempo
 
-    html_files = [f for f in os.listdir(folder_path) if f.endswith(".html")]
-    max_workers = os.cpu_count()  # Obtiene el número de núcleos de la CPU
+    archivosHTML = [f for f in os.listdir(pathCarpeta) if f.endswith(".html")]
+    max_workers = os.cpu_count() 
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = []
-        for filename in html_files:
-            input_html_path = os.path.join(folder_path, filename)
-            output_pdf_path = os.path.join(folder_path, filename.replace(".html", ".pdf"))
-            futures.append(executor.submit(convert_html_to_pdf, input_html_path, output_pdf_path))
+        for nombreArchivo in archivosHTML:
+            pathHTML = os.path.join(pathCarpeta, nombreArchivo)
+            pathPDF = os.path.join(pathCarpeta, nombreArchivo.replace(".html", ".pdf"))
+            futures.append(executor.submit(convertir_a_pdf, pathHTML, pathPDF))
 
         for future in as_completed(futures):
             try:
@@ -68,10 +66,10 @@ def convert_all_html_in_folder(folder_path):
             except Exception as e:
                 print(f"Error en la conversión: {e}")
 
-    end_time = time.time()  # Marca el final del tiempo
-    total_time = round(end_time - start_time, 2)
-    print(f'Tiempo total de la prueba: {total_time} segundos')
+    termino = time.time()  # Marca el final del tiempo
+    totalTest = round(termino - inicio, 2)
+    print(f'Tiempo total de la prueba: {totalTest} segundos')
 
 if __name__ == "__main__":
-    folder_path = r'C:\Users\carlo\OneDrive\Escritorio\Proyectos\Lighthouse'
-    convert_all_html_in_folder(folder_path)
+    pathCarpeta = r'C:\Users\carlo\OneDrive\Escritorio\Proyectos\Lighthouse'
+    convertir_all_htmls(pathCarpeta)

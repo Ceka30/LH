@@ -47,7 +47,7 @@ def convertir_a_pdf(pathHTML, pathPDF):
         driver.quit()
 
 def convertir_all_htmls(pathCarpeta):
-    inicio = time.time()  # Marca el inicio del tiempo
+    inicio = time.time()
 
     archivosHTML = [f for f in os.listdir(pathCarpeta) if f.endswith(".html")]
 
@@ -64,7 +64,7 @@ def convertir_all_htmls(pathCarpeta):
             except Exception as e:
                 print(f"Error en la conversión: {e}")
 
-    termino = time.time()  # Marca el final del tiempo
+    termino = time.time()
     totalTest = round(termino - inicio, 2)
     print(f'Tiempo total de la prueba: {totalTest} segundos')
 

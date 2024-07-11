@@ -33,11 +33,10 @@ def convertir_a_pdf(pathHTML, pathPDF):
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
         driver.get('file://' + pathHTML)
 
-        time.sleep(2)
         # Espera a que la página cargue completamente
-        # WebDriverWait(driver, 10).until(
-        #     EC.presence_of_element_located((By.TAG_NAME, "script"))
-        # )
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "script"))
+        )
 
         # Guarda la página como PDF
         guardar_como_pdf(driver, pathPDF)
@@ -51,9 +50,8 @@ def convertir_all_htmls(pathCarpeta):
     inicio = time.time()  # Marca el inicio del tiempo
 
     archivosHTML = [f for f in os.listdir(pathCarpeta) if f.endswith(".html")]
-    max_workers = os.cpu_count() 
 
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+    with ProcessPoolExecutor(max_workers=5) as executor:
         futures = []
         for nombreArchivo in archivosHTML:
             pathHTML = os.path.join(pathCarpeta, nombreArchivo)

@@ -1,1 +1,5 @@
 https://www.entel.cl/mayoristas/
+https://www.entel.cl/mayoristas/datos-infraestructura/
+https://www.entel.cl/mayoristas/datos-infraestructura/servicio-colocalizacion/
+https://www.entel.cl/mayoristas/datos-infraestructura/servicio-datos/
+https://www.entel.cl/mayoristas/datos-infraestructura/servicio-transporte/

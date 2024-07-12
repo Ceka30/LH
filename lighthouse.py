@@ -88,6 +88,7 @@ def urls_Lighthouse(url):
     inicio = time.time()
 
     # Ejecutar Lighthouse (Mobile - Desktop)
+    print(f"Ejecutando auditoria Lighthouse ...")
     rporteMOBILE = auditoria_Lighthouse(url, 'mobile')
     if rporteMOBILE:
         puntuacionesMOBILE = extraer_Puntuaciones(rporteMOBILE)

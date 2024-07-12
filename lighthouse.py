@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import time
 import subprocess
@@ -36,13 +37,15 @@ def auditoria_Lighthouse(url, mode):
     nombreLimpio = re.sub(r'[^\w.-]', '_', url)
     finalHTML = f'{mode}_{nombreLimpio}.html'
 
+    username = os.getlogin()
+    
     # Ruta completa al ejecutable de Node.js
-    #node_path = '/Users/carlosgomez/.nvm/versions/node/v20.15.1/bin/node'
+    #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'
     PATH_NODE = r'C:\Program Files\nodejs\node.exe'
 
     # Ruta completa al archivo de Lighthouse
-    #lighthouse_path = '/Users/carlosgomez/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
-    LIGHTHOUSE_PATH = r'C:\Users\carlo\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
+    #lighthouse_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
+    LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
 
     # Comando para ejecutar Lighthouse con la configuración necesaria
     command = [

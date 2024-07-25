@@ -1,11 +1,11 @@
 import os
 import time
+import chromedriver_autoinstaller
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 import base64
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -21,6 +21,7 @@ def guardar_como_pdf(driver, pathPDF):
         archivo.write(base64.b64decode(result['data']))
 
 def convertir_a_pdf(pathHTML, pathPDF):
+    driver = None
     try:
         # Configura las opciones de Chrome
         options = webdriver.ChromeOptions()
@@ -30,7 +31,9 @@ def convertir_a_pdf(pathHTML, pathPDF):
         options.add_argument("--disable-gpu")
         options.add_argument("--disable-dev-shm-usage")
 
-        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+        # Instala y configura chromedriver
+        chromedriver_path = chromedriver_autoinstaller.install()
+        driver = webdriver.Chrome(options=options)
         driver.get('file://' + pathHTML)
 
         # Espera a que la página cargue completamente
@@ -69,5 +72,6 @@ def convertir_all_htmls(pathCarpeta):
     print(f'Tiempo total de la prueba: {totalTest} segundos')
 
 if __name__ == "__main__":
-    pathCarpeta = r'C:\Users\carlo\OneDrive\Escritorio\Proyectos\Lighthouse'
+    username = os.getlogin()
+    pathCarpeta = rf'C:\Users\{username}\Desktop\Proyectos\Lighthouse'
     convertir_all_htmls(pathCarpeta)

@@ -1,5 +1,1 @@
-https://www.entel.cl/mayoristas/
-https://www.entel.cl/mayoristas/datos-infraestructura/
-https://www.entel.cl/mayoristas/datos-infraestructura/servicio-colocalizacion/
-https://www.entel.cl/mayoristas/datos-infraestructura/servicio-datos/
-https://www.entel.cl/mayoristas/datos-infraestructura/servicio-transporte/
+https://www.entel.cl/contratos/visualizador.iws?doc=anexo_planes_servicios_y_tarifas_plan_libres_22990_1-2

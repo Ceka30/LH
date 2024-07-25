@@ -41,6 +41,7 @@ def auditoria_Lighthouse(url, mode):
     
     # Ruta completa al ejecutable de Node.js
     #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'
+    
     PATH_NODE = r'C:\Program Files\nodejs\node.exe'
 
     # Ruta completa al archivo de Lighthouse

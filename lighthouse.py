@@ -55,7 +55,7 @@ def auditoria_Lighthouse(url, mode):
         url,
         '--output=html',
         f'--output-path={finalHTML}',
-        '--chrome-flags=--incognito --headless --no-sandbox --disable-gpu --disable-dev-shm-usage'
+        '--chrome-flags='
     ]
 
     # Configuración extra para el modo Desktop
@@ -134,9 +134,9 @@ def extraer_Puntuaciones(pathHTML):
             else:
                 resultados = None
             data = json.loads(resultados)
-            puntuaciones['performance'] = int(data["categories"]["performance"]["score"]*100)
-            puntuaciones['accessibility'] = int(data["categories"]["accessibility"]["score"]*100)
-            puntuaciones['seo'] = int(data["categories"]["seo"]["score"]*100)
+            puntuaciones['performance'] = int(data["categories"]["performance"]["score"]*100) if data["categories"]["performance"]["score"] is not None else "N/A"
+            puntuaciones['accessibility'] = int(data["categories"]["accessibility"]["score"]*100) if data["categories"]["accessibility"]["score"] is not None else "N/A"
+            puntuaciones['seo'] = int(data["categories"]["seo"]["score"]*100) if data["categories"]["seo"]["score"] is not None else "N/A"
 
         return puntuaciones
     except Exception as e:

@@ -41,17 +41,16 @@ def auditoria_Lighthouse(url, mode):
     
     # Ruta completa al ejecutable de Node.js
     #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'
-    PATH_NODE = '/usr/bin/node.exe'
+    PATH_NODE = '/usr/bin/node'
     #PATH_NODE = r'C:\Program Files\nodejs\node.exe'
 
     # Ruta completa al archivo de Lighthouse
     #lighthouse_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
-    LIGHTHOUSE_PATH = '/usr/lib/node_modules/lighthouse/cli/index.js'
+    LIGHTHOUSE_PATH = '/usr/lib/lighthouse'
     #LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
 
     # Comando para ejecutar Lighthouse con la configuración necesaria
     command = [
-        PATH_NODE,
         LIGHTHOUSE_PATH,
         url,
         '--output=html',

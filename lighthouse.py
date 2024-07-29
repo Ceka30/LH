@@ -41,16 +41,17 @@ def auditoria_Lighthouse(url, mode):
     
     # Ruta completa al ejecutable de Node.js
     #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'
-    PATH_NODE = '/usr/bin/node'
-    #PATH_NODE = r'C:\Program Files\nodejs\node.exe'
+    #PATH_NODE = '/usr/bin/node'
+    PATH_NODE = r'C:\Program Files\nodejs\node.exe'
 
     # Ruta completa al archivo de Lighthouse
     #lighthouse_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
-    LIGHTHOUSE_PATH = '/usr/lib/lighthouse'
-    #LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
+    #LIGHTHOUSE_PATH = '/usr/lib/lighthouse'
+    LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
 
     # Comando para ejecutar Lighthouse con la configuración necesaria
     command = [
+        PATH_NODE,
         LIGHTHOUSE_PATH,
         url,
         '--output=html',
@@ -202,14 +203,10 @@ with open('urls.txt', 'r') as archivo:
     urls = archivo.read().splitlines()
 
 # Ejecutar las pruebas en paralelo
-with ThreadPoolExecutor(max_workers=1) as ejec:
-    future_to_url = {ejec.submit(urls_Lighthouse, url): url for url in urls}
-    
-    for future in as_completed(future_to_url):
-        url = future_to_url[future]
-        try:
-            result = future.result()
-            if result['totalTest'] is not None:
-                print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
-        except Exception as e:
-            print(f"Error de procesamiento en {url}: {e}")
+for url in urls:
+    try:
+        result = urls_Lighthouse(url)
+        if result['totalTest'] is not None:
+            print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
+    except Exception as e:
+        print(f"Error de procesamiento en {url}: {e}")

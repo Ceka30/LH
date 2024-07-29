@@ -203,8 +203,15 @@ with open('urls.txt', 'r') as archivo:
     urls = archivo.read().splitlines()
 
 # Ejecutar las pruebas en paralelo
-for url in urls:
-    result = urls_Lighthouse(url)
-    if result['totalTest'] is not None:
-        print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
+with ThreadPoolExecutor(max_workers=1) as ejec:
+    future_to_url = {ejec.submit(urls_Lighthouse, url): url for url in urls}
+    
+    for future in as_completed(future_to_url):
+        url = future_to_url[future]
+        #try:
+        result = future.result()
+        if result['totalTest'] is not None:
+            print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
+        #except Exception as e:
+            #print(f"Error de procesamiento en {url}: {e}")
     

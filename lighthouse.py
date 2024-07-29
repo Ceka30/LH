@@ -204,9 +204,7 @@ with open('urls.txt', 'r') as archivo:
 
 # Ejecutar las pruebas en paralelo
 for url in urls:
-    try:
-        result = urls_Lighthouse(url)
-        if result['totalTest'] is not None:
-            print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
-    except Exception as e:
-        print(f"Error de procesamiento en {url}: {e}")
+    result = urls_Lighthouse(url)
+    if result['totalTest'] is not None:
+        print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
+    

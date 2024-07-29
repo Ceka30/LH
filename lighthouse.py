@@ -37,7 +37,7 @@ def auditoria_Lighthouse(url, mode):
     nombreLimpio = re.sub(r'[^\w.-]', '_', url)
     finalHTML = f'{mode}_{nombreLimpio}.html'
 
-    username = os.getlogin()
+    #username = os.getlogin()
     
     # Ruta completa al ejecutable de Node.js
     #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'

@@ -46,7 +46,7 @@ def auditoria_Lighthouse(url, mode):
 
     # Ruta completa al archivo de Lighthouse
     #lighthouse_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
-    LIGHTHOUSE_PATH = '/usr/lib/lighthouse'
+    LIGHTHOUSE_PATH = '/usr/lib/node_modules/lighthouse/cli/index.js'
     #LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
 
     # Comando para ejecutar Lighthouse con la configuración necesaria

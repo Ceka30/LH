@@ -32,7 +32,6 @@ def convertir_a_pdf(pathHTML, pathPDF):
         options.add_argument("--disable-dev-shm-usage")
 
         # Instala y configura chromedriver
-        chromedriver_path = chromedriver_autoinstaller.install()
         driver = webdriver.Chrome(options=options)
         driver.get('file://' + pathHTML)
 

@@ -1,268 +1,221 @@
-import time
 import json
+import os
+import re
+import time
 import subprocess
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
-from jinja2 import Template
+from bs4 import BeautifulSoup
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from openpyxl import Workbook, load_workbook
+
+# Función para verificar si una URL responde con un código de estado 200 y saltar pagina 404 de Entel
+def validar_Url(url):
+    try:
+        response = requests.head(url, allow_redirects=True)
+        codigo = response.status_code
+        if codigo == 200:
+            response = requests.get(url)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            titulo = soup.title.string if soup.title else ""
+
+            if "Error" in titulo or "Página de Error | Entel" in titulo:
+                codigo = 404
+                descripcion = "Redireccion - Página de Error Detectada"
+                print(f"Error al verificar la URL {url}: {codigo} {descripcion}")
+            else:
+                descripcion = "OK"
+        else:
+            descripcion = requests.status_codes._codes[codigo][0].replace('_', ' ').title()
+
+        return codigo, descripcion
+    except requests.RequestException as e:
+        print(f"Error al verificar la URL {url}: {e}")
+        return None, str(e)
 
 # Función para ejecutar Lighthouse en una URL específica (Mobile - Desktop)
 def auditoria_Lighthouse(url, mode):
-    # Ruta salida informe JSON
-    final_JSON = f'report_{mode}_{url.replace("https://", "").replace("/", "_")}.json'
+    nombreLimpio = re.sub(r'[^\w.-]', '_', url)
+    finalHTML = f'{mode}_{nombreLimpio}.html'
+
+    username = os.getlogin()
     
-    # Comando para ejecutar Lighthouse con la config necesaria
+    # Ruta completa al ejecutable de Node.js
+    #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'
+    #PATH_NODE = '/usr/bin/node'
+    PATH_NODE = r'C:\Program Files\nodejs\node.exe'
+
+    # Ruta completa al archivo de Lighthouse
+    #lighthouse_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
+    #LIGHTHOUSE_PATH = '/usr/lib/node_modules/lighthouse/cli/index.js'
+    LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\lighthouse.cmd'
+
+    # Comando para ejecutar Lighthouse con la configuración necesaria
     command = [
-        'lighthouse',
+        LIGHTHOUSE_PATH,
         url,
-        '--output=json',
-        f'--output-path={final_JSON}',
-        '--chrome-flags="--headless --no-sandbox --disable-gpu --disable-dev-shm-usage"'
+        '--output=html',
+        f'--output-path={finalHTML}',
+        '--chrome-flags='
     ]
-    # Configuracion extra para el modo Desktop
+
+    # Configuración extra para el modo Desktop
     if mode == 'desktop':
         command.append('--preset=desktop')
-    
-    # Eejcuta la auditoria de Lighthouse y captura cualquier salida o error generado por el comando.
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    
-    # Si el comando no se ejecutó correctamente, imprime el error
-    if result.returncode != 0:
-        print(f"Error al ejecutar Lighthouse desde {url} ({mode}):\n{result.stderr}")
+
+    try:
+        # Ajustar el límite de memoria de Node.js
+        result = subprocess.run(
+            command, 
+            capture_output=True, 
+            text=True, 
+            env={**os.environ, 'NODE_OPTIONS': '--max-old-space-size=8192'}  # Aumenta el límite de memoria a 8GB
+        )
+        if result.returncode != 0:
+            print(f"Error al ejecutar Lighthouse desde {url} ({mode}):\n{result.stderr}")
+            return None
+    except FileNotFoundError as e:
+        print(f"Lighthouse no se encontró en la ruta especificada. Asegúrate de que está instalado y accesible en {e}.")
         return None
     
-    
-    try:
-        with open(final_JSON, 'r', encoding='utf-8') as f:
-            report = json.load(f)
-        
-        # Extraer las puntuaciones de rendimiento, accesibilidad y SEO
-        performance = report['categories']['performance']['score']
-        accessibility = report['categories']['accessibility']['score']
-        seo = report['categories']['seo']['score']
-        
+    print(f"Se genera informe {finalHTML}")
+    return finalHTML
+
+# Función que ejecuta Lighthouse para una URL
+def urls_Lighthouse(url):
+    codigo, descripcionCodigo = validar_Url(url)
+    if codigo is None or codigo != 200:
+        # Si la URL no es válida, registrar el error en el Excel
+        actualizar_Excel(url, {'performance': None, 'accessibility': None, 'seo': None}, {'performance': None, 'accessibility': None, 'seo': None}, "Error", descripcionCodigo)
         return {
             'url': url,
-            'mode': mode,
-            'performance': performance,
-            'accessibility': accessibility,
-            'seo': seo
+            'totalTest': None
         }
-    except FileNotFoundError:
-        print(f"Archivo {final_JSON} no encontrado.")
-        return None
-    except json.JSONDecodeError:
-        print(f"Error al decodificar el archivo JSON: {final_JSON}.")
-        return None
 
-# Funcion que levanta Google Chrome y ejecuta Lighthouse para una URL
-def urls_Lighthouse(url):
-    # Configuracion de Google Chrome
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-dev-shm-usage")
-    
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-    driver.get(url)
-
-    time.sleep(10)
     inicio = time.time()
 
-    # Ejecutar Lighthouse (Movile - Desktop)
-    resultados_MOBILE = auditoria_Lighthouse(url, 'mobile')
-    resultados_DESKTOP = auditoria_Lighthouse(url, 'desktop')
+    # Ejecutar Lighthouse (Mobile - Desktop)
+    print(f"Ejecutando auditoria Lighthouse ...")
+    rporteMOBILE = auditoria_Lighthouse(url, 'mobile')
+    if rporteMOBILE:
+        puntuacionesMOBILE = extraer_Puntuaciones(rporteMOBILE)
+    else:
+        puntuacionesMOBILE = {'performance': None, 'accessibility': None, 'seo': None}
+
+    reporteDESKTOP = auditoria_Lighthouse(url, 'desktop')
+    if reporteDESKTOP:
+        puntuacionesDESKTOP = extraer_Puntuaciones(reporteDESKTOP)
+    else:
+        puntuacionesDESKTOP = {'performance': None, 'accessibility': None, 'seo': None}
+
+    # Actualizar el archivo Excel después de completar ambas auditorías
+    actualizar_Excel(url, puntuacionesMOBILE, puntuacionesDESKTOP, codigo, descripcionCodigo)
     
     termino = time.time()
-    driver.quit()
-    
-    total_test = round(termino - inicio, 2)
+    totalTest = round(termino - inicio, 2)
     
     return {
         'url': url,
-        'resultados_MOBILE': resultados_MOBILE,
-        'resultados_DESKTOP': resultados_DESKTOP,
-        'total_test': str(total_test)
+        'totalTest': totalTest
     }
 
-# Función para generar un informe HTML con los resultados de Lighthouse
-def generarReporte(url, resultados_MOBILE, resultados_DESKTOP, total_test):
-    html_template = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Lighthouse Report</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <style>
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            margin: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f0f0f0;
+# Función para extraer las puntuaciones de SEO, Accesibilidad y Performance del reporte HTML
+def extraer_Puntuaciones(pathHTML):
+    try:
+        puntuaciones = {
+            'performance': None,
+            'accessibility': None,
+            'seo': None
         }
 
-        h1 {
-            margin-top: 0;
-            text-align: center;
+        with open(pathHTML, 'r', encoding="utf-8") as file:
+            filas = file.readlines()
+        
+        # Buscamos la línea que contiene los datos JSON
+        jsonLine = next((line for line in filas if 'window.__LIGHTHOUSE_JSON__' in line), None)
+        if jsonLine:
+            match = re.search(r'=(.*?);<', jsonLine)
+            if match:
+                resultados = match.group(1)
+            else:
+                resultados = None
+            data = json.loads(resultados)
+            puntuaciones['performance'] = int(data["categories"]["performance"]["score"]*100) if data["categories"]["performance"]["score"] is not None else "N/A"
+            puntuaciones['accessibility'] = int(data["categories"]["accessibility"]["score"]*100) if data["categories"]["accessibility"]["score"] is not None else "N/A"
+            puntuaciones['seo'] = int(data["categories"]["seo"]["score"]*100) if data["categories"]["seo"]["score"] is not None else "N/A"
+
+        return puntuaciones
+    except Exception as e:
+        print(f"Error al extraer puntuaciones desde {pathHTML}: {e}")
+        return {
+            'performance': None,
+            'accessibility': None,
+            'seo': None
         }
 
-        table {
-            width: auto;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
+# Función para crear y actualizar el archivo Excel con los resultados
+def actualizar_Excel(url, puntuacionesMOBILE, puntuacionesDESKTOP, codigo, descripcionCodigo):
+    pathArchivo = 'resultados.xlsx'
+    try:
+        cargarExcel = load_workbook(pathArchivo)
+        hoja = cargarExcel.active
+    except FileNotFoundError:
+        cargarExcel = Workbook()
+        hoja = cargarExcel.active
+        hoja.append(['URL', 'Performance Mobile', 'Performance Desktop', 'Accesibilidad Mobile', 'Accesibilidad Desktop', 'SEO Mobile', 'SEO Desktop', 'Código', 'Descripción Código'])
 
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: center;
-        }
+    actualizado = False
+    for row in hoja.iter_rows(min_row=2, values_only=False):
+        if row[0].value == url:
+            row[1].value = puntuacionesMOBILE['performance']
+            row[2].value = puntuacionesDESKTOP['performance']
+            row[3].value = puntuacionesMOBILE['accessibility']
+            row[4].value = puntuacionesDESKTOP['accessibility']
+            row[5].value = puntuacionesMOBILE['seo']
+            row[6].value = puntuacionesDESKTOP['seo']
+            row[7].value = codigo
+            row[8].value = descripcionCodigo
+            actualizado = True
+            break
 
-        th {
-            background-color: #f4f4f41c;
-        }
+    if not actualizado:
+        new_row = [
+            url,
+            puntuacionesMOBILE['performance'], puntuacionesDESKTOP['performance'],
+            puntuacionesMOBILE['accessibility'], puntuacionesDESKTOP['accessibility'],
+            puntuacionesMOBILE['seo'], puntuacionesDESKTOP['seo'],
+            codigo, descripcionCodigo
+        ]
+        hoja.append(new_row)
 
-        canvas {
-            width: 150px;
-            height: 150px;
-            margin: 10px;
-        }
-        </style>
-    </head>
-    <body>
-        <h1>Reporte Lighthouse - URL : {{ url }}</h1>
-        <p>Duracion de la Auditoria: {{ total_test }} segundos</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Metricas</th>
-                    <th>Mobile</th>
-                    <th>Desktop</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Performance</td>
-                    <td><canvas id="mobilePerformance"></canvas></td>
-                    <td><canvas id="desktopPerformance"></canvas></td>
-                </tr>
-                <tr>
-                    <td>Accessibility</td>
-                    <td><canvas id="mobileAccessibility"></canvas></td>
-                    <td><canvas id="desktopAccessibility"></canvas></td>
-                </tr>
-                <tr>
-                    <td>SEO</td>
-                    <td><canvas id="mobileSEO"></canvas></td>
-                    <td><canvas id="desktopSEO"></canvas></td>
-                </tr>
-            </tbody>
-        </table>
-        <script>
-            function getColor(score) {
-                if (score < 0.5) {
-                    return '#b81818';  // Rojo
-                } else if (score < 0.9) {
-                    return '#FFA500';  // Amarillo
-                } else {
-                    return '#13ab34';  // Verde
-                }
-            }
+    # Ajustar el ancho de las columnas
+    for col in hoja.columns:
+        largo = 0
+        columna = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > largo:
+                    largo = len(cell.value)
+            except:
+                pass
+        ancho = (largo + 2)
+        hoja.column_dimensions[columna].width = ancho
 
-            function renderChart(id, value) {
-                const ctx = document.getElementById(id).getContext('2d');
-                new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        datasets: [{
-                            data: [value * 100, 100 - (value * 100)],
-                            backgroundColor: [getColor(value), '#ddd']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutoutPercentage: 50,
-                        tooltips: { enabled: false },
-                        plugins: {
-                            datalabels: {
-                                display: true,
-                                formatter: (val, ctx) => {
-                                    if (ctx.dataIndex === 0) {
-                                        return `${value * 100}%`;
-                                    } else {
-                                        return '';
-                                    }
-                                },
-                                color: '#000',
-                                font: { weight: 'bold', size: 20 }
-                            }
-                        }
-                    },
-                    plugins: [{
-                        beforeDraw: function(chart) {
-                            var width = chart.width,
-                                height = chart.height,
-                                ctx = chart.ctx;
-                            ctx.restore();
-                            var fontSize = (height / 114).toFixed(2);
-                            ctx.font = fontSize + "em sans-serif";
-                            ctx.textBaseline = "middle";
-                            var text = (value * 100).toFixed(0) + "%",
-                                textX = Math.round((width - ctx.measureText(text).width) / 2),
-                                textY = height / 2;
-                            ctx.fillText(text, textX, textY);
-                            ctx.save();
-                        }
-                    }]
-                });
-            }
-
-            document.addEventListener('DOMContentLoaded', function() {
-                renderChart('mobilePerformance', {{ mobile.performance }});
-                renderChart('desktopPerformance', {{ desktop.performance }});
-                renderChart('mobileAccessibility', {{ mobile.accessibility }});
-                renderChart('desktopAccessibility', {{ desktop.accessibility }});
-                renderChart('mobileSEO', {{ mobile.seo }});
-                renderChart('desktopSEO', {{ desktop.seo }});
-            });
-        </script>
-    </body>
-    </html>
-    """
-
-    # Renderizar el contenido del informe HTML utilizando la plantilla y los datos proporcionados
-    template = Template(html_template)
-    contenido_HTML = template.render(url=url, mobile=resultados_MOBILE, desktop=resultados_DESKTOP, total_test=total_test)
-
-    # Nombre del reporte = nombre de la URL
-    reporte_URL = f'{url.replace("https://", "").replace("/", "_")}.html'
-    # Escribe el contenido HTML en el archivo
-    with open(reporte_URL, 'w', encoding='utf-8') as f:
-        f.write(contenido_HTML)
-
-    print(f"Reporte Lighthouse: {reporte_URL}")
+    cargarExcel.save(pathArchivo)
 
 # Leer las URLs desde un archivo de texto
 with open('urls.txt', 'r') as archivo:
     urls = archivo.read().splitlines()
 
 # Ejecutar las pruebas en paralelo
-with ThreadPoolExecutor(max_workers=2) as ejec:
-
+with ThreadPoolExecutor(max_workers=1) as ejec:
     future_to_url = {ejec.submit(urls_Lighthouse, url): url for url in urls}
     
     for future in as_completed(future_to_url):
         url = future_to_url[future]
         try:
             result = future.result()
-            # Generar el informe HTML para la URL procesada
-            generarReporte(result['url'], result['resultados_MOBILE'], result['resultados_DESKTOP'], result['total_test'])
+            if result['totalTest'] is not None:
+                print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
         except Exception as e:
             print(f"Error de procesamiento en {url}: {e}")
+    

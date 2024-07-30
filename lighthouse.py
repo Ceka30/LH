@@ -35,7 +35,10 @@ def validar_Url(url):
 # Función para ejecutar Lighthouse en una URL específica (Mobile - Desktop)
 def auditoria_Lighthouse(url, mode):
     nombreLimpio = re.sub(r'[^\w.-]', '_', url)
-    finalHTML = f'{mode}_{nombreLimpio}.html'
+    if mode == 'mobile':
+        finalHTML = os.path.join('HTMLMobile', f'{mode}_{nombreLimpio}.html')
+    else:
+        finalHTML = os.path.join('HTMLDesktop', f'{mode}_{nombreLimpio}.html')
 
     username = os.getlogin()
     
@@ -56,7 +59,7 @@ def auditoria_Lighthouse(url, mode):
         url,
         '--output=html',
         f'--output-path={finalHTML}',
-        '--chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"'
+        '--chrome-flags='
     ]
 
     # Configuración extra para el modo Desktop
@@ -91,9 +94,9 @@ def urls_Lighthouse(url):
 
     # Ejecutar Lighthouse (Mobile - Desktop)
     print(f"Ejecutando auditoria Lighthouse ...")
-    rporteMOBILE = auditoria_Lighthouse(url, 'mobile')
-    if rporteMOBILE:
-        puntuacionesMOBILE = extraer_Puntuaciones(rporteMOBILE)
+    reporteMOBILE = auditoria_Lighthouse(url, 'mobile')
+    if reporteMOBILE:
+        puntuacionesMOBILE = extraer_Puntuaciones(reporteMOBILE)
     else:
         puntuacionesMOBILE = {'performance': None, 'accessibility': None, 'seo': None}
 
@@ -198,6 +201,12 @@ def actualizar_Excel(url, puntuacionesMOBILE, puntuacionesDESKTOP, codigo, descr
 
     cargarExcel.save(pathArchivo)
 
+# Crear carpetas si no existen
+if not os.path.exists('HTMLMobile'):
+    os.makedirs('HTMLMobile')
+if not os.path.exists('HTMLDesktop'):
+    os.makedirs('HTMLDesktop')
+
 # Leer las URLs desde un archivo de texto
 with open('urls.txt', 'r') as archivo:
     urls = archivo.read().splitlines()
@@ -214,4 +223,3 @@ with ThreadPoolExecutor(max_workers=1) as ejec:
                 print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
         except Exception as e:
             print(f"Error de procesamiento en {url}: {e}")
-    

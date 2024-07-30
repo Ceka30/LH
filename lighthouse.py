@@ -66,7 +66,7 @@ def auditoria_Lighthouse(url, mode):
         url,
         '--output=html',
         f'--output-path={finalHTML}',
-        '--chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"'
+        '--chrome-flags="--no-sandbox --disable-dev-shm-usage"'
     ]
 
     # Configuración extra para el modo Desktop

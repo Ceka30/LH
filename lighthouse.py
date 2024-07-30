@@ -35,7 +35,10 @@ def validar_Url(url):
 # Función para ejecutar Lighthouse en una URL específica (Mobile - Desktop)
 def auditoria_Lighthouse(url, mode):
     nombreLimpio = re.sub(r'[^\w.-]', '_', url)
-    finalHTML = f'{mode}_{nombreLimpio}.html'
+    if mode == 'mobile':
+        finalHTML = os.path.join('HTMLMobile', f'{mode}_{nombreLimpio}.html')
+    else:
+        finalHTML = os.path.join('HTMLDesktop', f'{mode}_{nombreLimpio}.html')
 
     #username = os.getlogin()
     

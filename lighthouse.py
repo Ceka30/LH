@@ -8,6 +8,13 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openpyxl import Workbook, load_workbook
 
+# Crear carpetas si no existen y asegurarse de que tienen los permisos adecuados
+def crear_carpetas():
+    for carpeta in ['HTMLMobile', 'HTMLDesktop']:
+        if not os.path.exists(carpeta):
+            os.makedirs(carpeta)
+        os.chmod(carpeta, 0o777)
+
 # Función para verificar si una URL responde con un código de estado 200 y saltar pagina 404 de Entel
 def validar_Url(url):
     try:
@@ -200,6 +207,9 @@ def actualizar_Excel(url, puntuacionesMOBILE, puntuacionesDESKTOP, codigo, descr
         hoja.column_dimensions[columna].width = ancho
 
     cargarExcel.save(pathArchivo)
+
+# Crear carpetas si no existen y asegurarse de que tienen los permisos adecuados
+crear_carpetas()
 
 # Leer las URLs desde un archivo de texto
 with open('urls.txt', 'r') as archivo:

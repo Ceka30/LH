@@ -8,13 +8,6 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openpyxl import Workbook, load_workbook
 
-# Crear carpetas si no existen y asegurarse de que tienen los permisos adecuados
-def crear_carpetas():
-    for carpeta in ['HTMLMobile', 'HTMLDesktop']:
-        if not os.path.exists(carpeta):
-            os.makedirs(carpeta)
-        os.chmod(carpeta, 0o777)
-
 # Función para verificar si una URL responde con un código de estado 200 y saltar pagina 404 de Entel
 def validar_Url(url):
     try:
@@ -47,11 +40,17 @@ def auditoria_Lighthouse(url, mode):
     else:
         finalHTML = os.path.join('HTMLDesktop', f'{mode}_{nombreLimpio}.html')
 
+    username = os.getlogin()
+    
     # Ruta completa al ejecutable de Node.js
-    PATH_NODE = '/usr/bin/node'
+    #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'
+    #PATH_NODE = '/usr/bin/node'
+    PATH_NODE = r'C:\Program Files\nodejs\node.exe'
 
     # Ruta completa al archivo de Lighthouse
-    LIGHTHOUSE_PATH = '/usr/lib/node_modules/lighthouse/cli/index.js'
+    #lighthouse_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
+    #LIGHTHOUSE_PATH = '/usr/lib/node_modules/lighthouse/cli/index.js'
+    LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
 
     # Comando para ejecutar Lighthouse con la configuración necesaria
     command = [
@@ -202,8 +201,11 @@ def actualizar_Excel(url, puntuacionesMOBILE, puntuacionesDESKTOP, codigo, descr
 
     cargarExcel.save(pathArchivo)
 
-# Crear carpetas si no existen y asegurarse de que tienen los permisos adecuados
-crear_carpetas()
+# Crear carpetas si no existen
+if not os.path.exists('HTMLMobile'):
+    os.makedirs('HTMLMobile')
+if not os.path.exists('HTMLDesktop'):
+    os.makedirs('HTMLDesktop')
 
 # Leer las URLs desde un archivo de texto
 with open('urls.txt', 'r') as archivo:

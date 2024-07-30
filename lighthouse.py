@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 import re
@@ -160,7 +161,10 @@ def extraer_Puntuaciones(pathHTML):
 
 # Función para crear y actualizar el archivo Excel con los resultados
 def actualizar_Excel(url, puntuacionesMOBILE, puntuacionesDESKTOP, codigo, descripcionCodigo):
-    pathArchivo = 'resultados.xlsx'
+    fecha_hora_actual = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Nombre del archivo con la fecha y hora de ejecución
+    pathArchivo = f'resultados_{fecha_hora_actual}.xlsx'
     try:
         cargarExcel = load_workbook(pathArchivo)
         hoja = cargarExcel.active

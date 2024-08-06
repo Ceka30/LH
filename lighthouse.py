@@ -225,15 +225,16 @@ with open('urls.txt', 'r') as archivo:
 
 # Variable global para almacenar la ruta del archivo Excel
 pathArchivo = None
+lock = threading.Lock()
 
-# Ejecutar las pruebas en paralelo
 with ThreadPoolExecutor(max_workers=1) as ejec:
     future_to_url = {ejec.submit(urls_Lighthouse, url): url for url in urls}
     
     for future in as_completed(future_to_url):
         url = future_to_url[future]
         try:
-            result = future.result()
+            with lock:
+                result = future.result()
             if result['totalTest'] is not None:
                 print(f"Duración total de la auditoría para {url}: {result['totalTest']} segundos")
         except Exception as e:

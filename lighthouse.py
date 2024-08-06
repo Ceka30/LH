@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openpyxl import Workbook, load_workbook
+import threading
 
 # Crear carpetas si no existen y asegurarse de que tienen los permisos adecuados
 def crear_carpetas():

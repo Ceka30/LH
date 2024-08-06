@@ -44,13 +44,9 @@ def auditoria_Lighthouse(url, mode):
     username = os.getlogin()
     
     # Ruta completa al ejecutable de Node.js
-    #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'
-    #PATH_NODE = '/usr/bin/node'
     PATH_NODE = r'C:\Program Files\nodejs\node.exe'
 
     # Ruta completa al archivo de Lighthouse
-    #lighthouse_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
-    #LIGHTHOUSE_PATH = '/usr/lib/node_modules/lighthouse/cli/index.js'
     LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
 
     # Comando para ejecutar Lighthouse con la configuración necesaria
@@ -154,10 +150,13 @@ def extraer_Puntuaciones(pathHTML):
 
 # Función para crear y actualizar el archivo Excel con los resultados
 def actualizar_Excel(url, puntuacionesMOBILE, puntuacionesDESKTOP, codigo, descripcionCodigo):
+    global pathArchivo
     fecha_hora_actual = datetime.now().strftime('%Y%m%d_%H%M%S')
     
-    # Nombre del archivo con la fecha y hora de ejecución
-    pathArchivo = f'resultados_{fecha_hora_actual}.xlsx'
+    # Nombre del archivo con la fecha y hora de ejecución (solo se crea una vez)
+    if not pathArchivo:
+        pathArchivo = f'resultados_{fecha_hora_actual}.xlsx'
+    
     try:
         cargarExcel = load_workbook(pathArchivo)
         hoja = cargarExcel.active
@@ -214,6 +213,9 @@ if not os.path.exists('HTMLDesktop'):
 # Leer las URLs desde un archivo de texto
 with open('urls.txt', 'r') as archivo:
     urls = archivo.read().splitlines()
+
+# Variable global para almacenar la ruta del archivo Excel
+pathArchivo = None
 
 # Ejecutar las pruebas en paralelo
 with ThreadPoolExecutor(max_workers=1) as ejec:

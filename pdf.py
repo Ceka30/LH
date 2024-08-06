@@ -1,6 +1,6 @@
 import os
 import time
-import chromedriver_autoinstaller
+#import chromedriver_autoinstaller
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
@@ -32,6 +32,7 @@ def convertir_a_pdf(pathHTML, pathPDF):
         options.add_argument("--disable-dev-shm-usage")
 
         # Instala y configura chromedriver
+        #chromedriver_autoinstaller.install()
         driver = webdriver.Chrome(options=options)
         driver.get('file://' + pathHTML)
 
@@ -46,18 +47,22 @@ def convertir_a_pdf(pathHTML, pathPDF):
     except Exception as e:
         print(f"Error al convertir {pathHTML}: {e}")
     finally:
-        driver.quit()
+        if driver:
+            driver.quit()
 
-def convertir_all_htmls(pathCarpeta):
+def convertir_all_htmls(pathCarpetaHTML, pathCarpetaPDF):
     inicio = time.time()
 
-    archivosHTML = [f for f in os.listdir(pathCarpeta) if f.endswith(".html")]
+    archivosHTML = [f for f in os.listdir(pathCarpetaHTML) if f.endswith(".html")]
+
+    if not os.path.exists(pathCarpetaPDF):
+        os.makedirs(pathCarpetaPDF)
 
     with ProcessPoolExecutor(max_workers=5) as executor:
         futures = []
         for nombreArchivo in archivosHTML:
-            pathHTML = os.path.join(pathCarpeta, nombreArchivo)
-            pathPDF = os.path.join(pathCarpeta, nombreArchivo.replace(".html", ".pdf"))
+            pathHTML = os.path.join(pathCarpetaHTML, nombreArchivo)
+            pathPDF = os.path.join(pathCarpetaPDF, nombreArchivo.replace(".html", ".pdf"))
             futures.append(executor.submit(convertir_a_pdf, pathHTML, pathPDF))
 
         for future in as_completed(futures):
@@ -72,5 +77,13 @@ def convertir_all_htmls(pathCarpeta):
 
 if __name__ == "__main__":
     username = os.getlogin()
-    pathCarpeta = rf'C:\Users\{username}\Desktop\Proyectos\Lighthouse'
-    convertir_all_htmls(pathCarpeta)
+    pathCarpetaHTMLDesktop = rf'C:\Users\{username}\Desktop\Proyectos\Lighthouse\HTMLDesktop'
+    pathCarpetaPDFDesktop = rf'C:\Users\{username}\Desktop\Proyectos\Lighthouse\PDFDesktop'
+    pathCarpetaHTMLMobile = rf'C:\Users\{username}\Desktop\Proyectos\Lighthouse\HTMLMobile'
+    pathCarpetaPDFMobile = rf'C:\Users\{username}\Desktop\Proyectos\Lighthouse\PDFMobile'
+
+    print("Convirtiendo archivos HTMLDesktop a PDFDesktop...")
+    convertir_all_htmls(pathCarpetaHTMLDesktop, pathCarpetaPDFDesktop)
+
+    print("Convirtiendo archivos HTMLMobile a PDFMobile...")
+    convertir_all_htmls(pathCarpetaHTMLMobile, pathCarpetaPDFMobile)

@@ -41,6 +41,52 @@ def validar_Url(url):
         return None, str(e)
 
 # Función para ejecutar Lighthouse en una URL específica (Mobile - Desktop)
+# def auditoria_Lighthouse(url, mode):
+#     nombreLimpio = re.sub(r'[^\w.-]', '_', url)
+#     if mode == 'mobile':
+#         finalHTML = os.path.join('HTMLMobile', f'{mode}_{nombreLimpio}.html')
+#     else:
+#         finalHTML = os.path.join('HTMLDesktop', f'{mode}_{nombreLimpio}.html')
+
+#     #username = os.getlogin()
+    
+#     # Ruta completa al ejecutable de Node.js
+#     #node_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/bin/node'
+#     PATH_NODE = '/usr/bin/node'
+#     #PATH_NODE = r'C:\Program Files\nodejs\node.exe'
+
+#     # Ruta completa al archivo de Lighthouse
+#     #lighthouse_path = f'/Users/{username}/.nvm/versions/node/v20.15.1/lib/node_modules/lighthouse/cli/index.js'
+#     LIGHTHOUSE_PATH = '/usr/lib/node_modules/lighthouse/cli/index.js'
+#     #LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
+
+#     # Comando para ejecutar Lighthouse con la configuración necesaria
+#     command = [
+#         PATH_NODE,
+#         LIGHTHOUSE_PATH,
+#         url,
+#         '--output=html',
+#         f'--output-path={finalHTML}',
+#         '--chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --window-size=1920,1080"'
+#     ]
+
+#     # Configuración extra para el modo Desktop
+#     if mode == 'desktop':
+#         command.append('--preset=desktop')
+
+#     try:
+#         # Ejecuta la auditoría de Lighthouse
+#         result = subprocess.run(command, capture_output=True, text=True)
+#         if result.returncode != 0:
+#             print(f"Error al ejecutar Lighthouse desde {url} ({mode}):\n{result.stderr}")
+#             return None
+#     except FileNotFoundError:
+#         print(f"Lighthouse no se encontró en la ruta especificada. Asegúrate de que está instalado y accesible en {LIGHTHOUSE_PATH}.")
+#         return None
+    
+#     print(f"Se genera informe {finalHTML}")
+#     return finalHTML
+
 def auditoria_Lighthouse(url, mode):
     nombreLimpio = re.sub(r'[^\w.-]', '_', url)
     if mode == 'mobile':
@@ -60,6 +106,13 @@ def auditoria_Lighthouse(url, mode):
     LIGHTHOUSE_PATH = '/usr/lib/node_modules/lighthouse/cli/index.js'
     #LIGHTHOUSE_PATH = rf'C:\Users\{username}\AppData\Roaming\npm\node_modules\lighthouse\cli\index.js'
 
+    # Banderas de Chrome para simular un entorno más similar al de DevTools
+    chrome_flags = (
+        '--disable-gpu --no-sandbox --disable-dev-shm-usage '
+        '--disable-setuid-sandbox --disable-software-rasterizer '
+        '--disable-extensions --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"'
+    )
+
     # Comando para ejecutar Lighthouse con la configuración necesaria
     command = [
         PATH_NODE,
@@ -67,12 +120,19 @@ def auditoria_Lighthouse(url, mode):
         url,
         '--output=html',
         f'--output-path={finalHTML}',
-        '--chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --window-size=1920,1080"'
+        f'--chrome-flags={chrome_flags}',
     ]
 
-    # Configuración extra para el modo Desktop
     if mode == 'desktop':
-        command.append('--preset=desktop')
+        # Configuración para el modo Desktop
+        command.extend(['--preset=desktop', '--screenEmulation.disabled=true', '--formFactor=desktop', '--throttling-method=devtools'])
+    else:
+        # Configuración explícita para el modo Mobile
+        command.extend([
+            '--formFactor=mobile',
+            '--screenEmulation.mobile',
+            '--throttling-method=devtools'
+        ])
 
     try:
         # Ejecuta la auditoría de Lighthouse

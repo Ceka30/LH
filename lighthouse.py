@@ -120,7 +120,7 @@ def auditoria_Lighthouse(url, mode):
         url,
         '--output=html',
         f'--output-path={finalHTML}',
-        f'--chrome-flags={chrome_flags}',
+        '--chrome-flags="--headless --no-sandbox --disable-dev-shm-usage --window-size=1920,1080"'
     ]
 
     if mode == 'desktop':
